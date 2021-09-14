@@ -1,0 +1,31 @@
+[tool.poetry]
+name = "scalpr"
+version = "0.0.1"
+description = "A microframework for Binance spot trading bots"
+authors = ["Thomas van Meer <tvanmeer123@gmail.com>"]
+license = "MIT"
+readme = "README.md"
+homepage = "https://github.com/TvanMeer/scalpr"
+repository = "https://github.com/TvanMeer/scalpr.git"
+
+[tool.poetry.dependencies]
+python = "^3.8"
+python-binance = "^1.0.14"
+pydantic = "^1.8.2"
+python-dotenv = "^0.19.0"
+
+[tool.poetry.dev-dependencies]
+pytest = "^6.2.5"
+pytest-asyncio = "^0.15.1"
+pylint = "^2.10.2"
+autopep8 = "^1.5.7"
+isort = "^5.9.3"
+
+[tool.autopep8]
+in-place = true
+recursive = false
+aggressive = 3
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"

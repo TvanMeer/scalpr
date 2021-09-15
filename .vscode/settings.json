@@ -1,8 +1,18 @@
 {
   "python.pythonPath": ".venv/bin/python",
+  "python.envFile": "${workspaceFolder}/.venv",
   "python.testing.pytestArgs": ["tests"],
   "python.testing.unittestEnabled": false,
   "python.testing.pytestEnabled": true,
+  "python.testing.pytestPath": ".venv/bin/pytest",
+  "python.linting.enabled": true,
+  "python.linting.pylintEnabled": true,
+  "python.linting.pylintPath": ".venv/bin/pylint",
+  "python.formatting.provider": "autopep8",
+  "editor.formatOnSave": true,
+  "editor.codeActionsOnSave": {
+    "source.organizeImports": true
+  },
   "files.exclude": {
     "**/.git": true,
     "**/.svn": true,
@@ -11,13 +21,6 @@
     "**/.DS_Store": true,
     "**/Thumbs.db": true,
     "**/.pytest_cache": true,
-    "**/__pycache__": true
-  },
-  "python.linting.enabled": true,
-  "python.linting.pylintEnabled": true,
-  "python.formatting.provider": "autopep8",
-  "editor.formatOnSave": true,
-  "editor.codeActionsOnSave": {
-    "source.organizeImports": true
+    "**/__pycache__": true,
   }
 }

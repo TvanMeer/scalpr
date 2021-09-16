@@ -17,7 +17,7 @@ class Ask(BaseModel):
     quantity: condecimal(decimal_places=8, gt=0)
 
 
-class OrderBook(BaseModel):
+class OrderBookUpdate(BaseModel):
     """Orderbook updates within timeframe.
 
     {

@@ -1,7 +1,12 @@
 from enum import Enum
 
 
-class Mode(str, Enum):
+class ExtendedEnum(Enum):
+    @classmethod
+    def list(cls):
+        return list(map(lambda c: c.value, cls))
+
+class Mode(ExtendedEnum):
     """Single choice in options.mode."""
 
     TEST       = "TEST"
@@ -11,7 +16,7 @@ class Mode(str, Enum):
     TRADE      = "TRADE"
 
 
-class Stream(str, Enum):
+class Stream(ExtendedEnum):
     """Optional multiple choice in options.streams."""
 
     CANDLE     = "CANDLE"
@@ -25,7 +30,7 @@ class Stream(str, Enum):
     TRADE      = "TRADE"
 
 
-class Interval(str, Enum):
+class Interval(ExtendedEnum):
     """One or multiple choice in options.intervals."""
 
     SECOND_2   = "2s"
@@ -45,14 +50,14 @@ class Interval(str, Enum):
     WEEK_1     = "1w"
 
 
-class ContentType(str, Enum):
+class ContentType(ExtendedEnum):
     """Different types of content the pipeline can process."""
 
     CANDLE_STREAM:  "CANDLE_STREAM"
     CANDLE_HISTORY: "CANDLE_HISTORY"
 
 
-class InTimeFrame(str, Enum):
+class InTimeFrame(ExtendedEnum):
     """Used in pipeline. 
     Describes in which timeframe a new piece of content should be placed or updated.
     """

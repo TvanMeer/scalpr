@@ -38,6 +38,7 @@ class Options(BaseModel):
         return v
 
 
+
     @validator("base_assets", "quote_assets", pre=True)
     @classmethod
     def _check_asset_names(cls, v):
@@ -56,6 +57,7 @@ class Options(BaseModel):
             return lower
         else:
             raise ValidationError("Asset names should be strings.")
+
 
 
     @validator("window_intervals", pre=True)
@@ -78,7 +80,7 @@ class Options(BaseModel):
         else:
             raise ValidationError("Invalid window intervals: should be strings.")
 
-  
+
 
     @validator("window_length", pre=True)
     @classmethod
@@ -89,6 +91,7 @@ class Options(BaseModel):
             return v
         else:
             raise ValidationError("Invalid window length.")
+
 
 
     @validator("streams", pre=True)

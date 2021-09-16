@@ -1,6 +1,5 @@
 from decimal import Decimal
 
-import pytest
 from scalpr.database.candle import Candle
 
 

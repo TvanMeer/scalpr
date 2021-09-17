@@ -120,8 +120,8 @@ class Pipe(ABC):
         return close_time
 
 
-    def add_new_empty_timeframe(self, window: Window) -> Window:
-        """Adds a new empty timeframe to window.timeframes."""
+    def add_next_empty_timeframe(self, window: Window) -> Window:
+        """Adds the next new empty timeframe to window.timeframes."""
 
         prev_ot = window.timeframes[-1].open_time
         prev_ct = window.timeframes[-1].close_time

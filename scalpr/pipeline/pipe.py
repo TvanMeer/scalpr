@@ -64,32 +64,33 @@ class Pipe(ABC):
         }
 
         in_tf = self.which_timeframe(payload, window)
-        return tf[in_tf](payload, window)
+        parsed = self.parse(payload)
+        return tf[in_tf](parsed, window)
 
 
 
-    @abstractmethod
-    def parse(self, payload: Any) -> BaseModel:
-        raise NotImplementedError
-        
     @abstractmethod
     def which_timeframe(self, payload: Any, window: Window) -> InTimeFrame:
         raise NotImplementedError
 
     @abstractmethod
-    def insert_in_first_timeframe(self, payload: Any, window: Window) -> Window:
+    def parse(self, payload: Any) -> BaseModel:
         raise NotImplementedError
 
     @abstractmethod
-    def insert_in_previous_timeframe(self, payload: Any, window: Window) -> Window:
+    def insert_in_first_timeframe(self, parsed: Any, window: Window) -> Window:
         raise NotImplementedError
 
     @abstractmethod
-    def insert_in_current_timeframe(self, payload: Any, window: Window) -> Window:
+    def insert_in_previous_timeframe(self, parsed: Any, window: Window) -> Window:
         raise NotImplementedError
 
     @abstractmethod
-    def insert_in_next_timeframe(self, payload: Any, window: Window) -> Window:
+    def insert_in_current_timeframe(self, parsed: Any, window: Window) -> Window:
+        raise NotImplementedError
+
+    @abstractmethod
+    def insert_in_next_timeframe(self, parsed: Any, window: Window) -> Window:
         raise NotImplementedError
 
 

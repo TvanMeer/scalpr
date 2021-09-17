@@ -1,18 +1,18 @@
-from typing import Dict
+from typing import List
 
 from ..core.constants import InTimeFrame
 from ..database.candle import Candle
 from ..database.window import Window
 
 
-class CandlePipe:
+class HistoricalCandlePipe:
 
         
-    def which_timeframe(self, payload: Dict, window: Window) -> InTimeFrame:
+    def which_timeframe(self, payload: List, window: Window) -> InTimeFrame:
         pass
 
 
-    def parse(self, payload: Dict) -> Candle:
+    def parse(self, payload: List) -> Candle:
         pass
 
  

@@ -67,3 +67,4 @@ class InTimeFrame(ExtendedEnum):
     CURRENT:  "CURRENT"
     NEXT:     "NEXT"
     OTHER:    "OTHER"
+    IGNORE:   "IGNORE"

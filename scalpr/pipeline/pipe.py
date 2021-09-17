@@ -59,6 +59,7 @@ class Pipe(ABC):
             InTimeFrame.CURRENT:  self.insert_in_current_timeframe,
             InTimeFrame.NEXT:     self.insert_in_next_timeframe,
             InTimeFrame.OTHER:    self.data_leakage_error,
+            InTimeFrame.IGNORE:   self.ignore
         }
 
         in_tf = self.which_timeframe(payload, window)
@@ -101,6 +102,11 @@ class Pipe(ABC):
         of your feature calculation functions.
         """
         raise Exception(e)
+
+    def ignore(self, *args):
+        """Ignore payload."""
+
+        pass
 
 
     def round_time(self, close_time: datetime):

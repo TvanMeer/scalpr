@@ -28,13 +28,13 @@ class Pipe(ABC):
         interval = meta["interval"] if "interval" in meta.keys() else None
 
         def one_window(self):
-            db.symbols[symbol].windows[interval] = self.process_window(
+            db.symbols[symbol].windows[interval] = self._process_window(
                 contenttype, payload, db.symbols[symbol].windows[interval]
             )
 
         def all_windows(self):
             for iv, w in db.symbols[symbol].windows.items():
-                db.symbols[symbol].windows[iv] = self.process_window(contenttype, payload, w)
+                db.symbols[symbol].windows[iv] = self._process_window(contenttype, payload, w)
 
         apply_on_windows = {
             ContentType.CANDLE_HISTORY: one_window,
@@ -44,7 +44,7 @@ class Pipe(ABC):
         return db
 
 
-    def process_window(
+    def _process_window(
         self, 
         contenttype: ContentType, 
         payload:     Any, 

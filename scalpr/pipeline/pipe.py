@@ -64,7 +64,8 @@ class Pipe(ABC):
 
         in_tf = self.which_timeframe(payload, window)
         parsed = self.parse(payload)
-        return tf[in_tf](parsed, window)
+        updated_window = tf[in_tf](parsed, window)
+        return updated_window
 
 
 

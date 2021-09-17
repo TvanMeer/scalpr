@@ -30,12 +30,12 @@ class Pipe(ABC):
 
         def one_window(self):
             db.symbols[symbol].windows[interval] = self._process_window(
-                contenttype, payload, db.symbols[symbol].windows[interval]
+                payload, db.symbols[symbol].windows[interval]
             )
 
         def all_windows(self):
             for iv, w in db.symbols[symbol].windows.items():
-                db.symbols[symbol].windows[iv] = self._process_window(contenttype, payload, w)
+                db.symbols[symbol].windows[iv] = self._process_window(payload, w)
 
         apply_on_windows = {
             ContentType.CANDLE_HISTORY: one_window,
@@ -46,15 +46,12 @@ class Pipe(ABC):
 
 
     def _process_window(
-        self, 
-        contenttype: ContentType, 
+        self,
         payload:     Any, 
         window:      Window
     ) -> Window:
         """Updates a single window."""
 
-        if not window._history_downloaded and contenttype == ContentType.CANDLE_STREAM:
-            return window
 
         tf = {
             InTimeFrame.FIRST:    self.insert_in_first_timeframe,

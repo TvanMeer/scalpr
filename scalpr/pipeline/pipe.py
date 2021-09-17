@@ -25,7 +25,7 @@ class Pipe(ABC):
         """Calls process_window() for the windows that should be updated."""
 
         symbol   = meta["symbol"]
-        interval = meta["interval"]
+        interval = meta["interval"] if "interval" in meta.keys() else None
 
         def one_window(self):
             db.symbols[symbol].windows[interval] = self.process_window(

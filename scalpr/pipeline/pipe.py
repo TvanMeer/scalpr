@@ -9,6 +9,7 @@ from scalpr.database.database import DataBase
 from scalpr.database.window import Window
 
 from ..core.constants import ContentType, InTimeFrame
+from ..database.timeframe import TimeFrame
 
 
 class Pipe(ABC):
@@ -113,3 +114,18 @@ class Pipe(ABC):
         rounded = close_time - timedelta(microseconds=close_time.microsecond)
         close_time = rounded - timedelta(milliseconds=1)
         return close_time
+
+
+    def add_new_empty_timeframe(self, window: Window) -> Window:
+        """Adds a new empty timeframe to window.timeframes."""
+
+        prev_ot = window.timeframes[-1].open_time
+        prev_ct = window.timeframes[-1].close_time
+        milli = timedelta(milliseconds=1)
+        delta = prev_ct - prev_ot + milli
+        tf = TimeFrame(
+            open_time  = prev_ot + delta,
+            close_time = prev_ct + delta
+        )
+        window.timeframes.append(tf)
+        return window

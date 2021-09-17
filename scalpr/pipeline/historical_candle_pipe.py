@@ -3,9 +3,10 @@ from typing import List
 from ..core.constants import InTimeFrame
 from ..database.candle import Candle
 from ..database.window import Window
+from .pipe import Pipe
 
 
-class HistoricalCandlePipe:
+class HistoricalCandlePipe(Pipe):
 
         
     def which_timeframe(self, payload: List, window: Window) -> InTimeFrame:

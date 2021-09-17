@@ -3,9 +3,10 @@ from typing import Dict
 from ..core.constants import InTimeFrame
 from ..database.candle import Candle
 from ..database.window import Window
+from .pipe import Pipe
 
 
-class CandlePipe:
+class CandlePipe(Pipe):
 
         
     def which_timeframe(self, payload: Dict, window: Window) -> InTimeFrame:

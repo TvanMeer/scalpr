@@ -1,8 +1,7 @@
 # pylint: disable=no-name-in-module
 
 from collections import deque
-from datetime import datetime
-from typing import Deque, Tuple
+from typing import Deque
 
 from pydantic import BaseModel
 
@@ -17,15 +16,17 @@ class Ask(BaseModel):
     quantity: float
 
 class Depth(BaseModel):
-    """Depthchart, showing the best bids and asks in the orderbook.
-    orders[0] is the best bid and ask, orders[1] the second best etc.
-    The orders are a snapshot of the depthcache at close time of the timeframe.
+    """Depthcache, showing the best bids and asks in the orderbook.
+    Timeframe.depth.bids[0] is the best bid, Timeframe.depth.bids[1] 
+    the second best etc.
+    The bids and asks are a snapshot of the depthcache at close time 
+    of the timeframe.
 
-    The value Options._depthcache_size represents the number of orders saved
-    in Depth.orders.
-    E.g. if Options._depthcache_size is equal to 5, the top 5 best bids and asks
-    will be saved in Depth.orders.
+    The value Options._depthcache_size represents the number of bids 
+    and asks saved.
+    E.g. if Options._depthcache_size is equal to 5, 
+    the top 5 best bids and asks will be saved.
     """
 
-    orders:            Deque[Tuple[Bid, Ask]] = deque()
-    last_update_time:  datetime
+    bids:  Deque[Bid]  = deque()
+    asks:  Deque[Ask]  = deque()

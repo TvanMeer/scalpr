@@ -1,15 +1,21 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from scalpr.database.depth import Ask, Bid, Depth
+from scalpr.database.timeframe import TimeFrame
 
 
 def test_depth_init():
-    order_1 = (
-        Bid(price=0.123, quantity=12.01), 
-        Ask(price=0.125, quantity=10.47)
-    )
-    time = datetime.now()
-    d = Depth(last_update_time=time)
-    d.orders.append(order_1)
-    assert d.orders[0][0].price == 0.123
-    assert d.orders[0][1].price == 0.125
+    
+    bid = Bid(price=0.123, quantity=12.01)
+    ask = Ask(price=0.125, quantity=10.47)
+    depth = Depth()
+    depth.bids.append(bid)
+    depth.asks.append(ask)
+
+    ot = datetime.now()
+    ct = datetime.now()
+    timeframe = TimeFrame(open_time=ot, close_time=ct)
+    timeframe.depth = depth
+
+    assert timeframe.depth.bids[0].price == 0.123
+    assert timeframe.depth.asks[0].price == 0.125

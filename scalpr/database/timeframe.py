@@ -2,7 +2,7 @@
 
 from collections import deque
 from datetime import datetime
-from typing import Deque, Optional, Union
+from typing import Deque, Optional
 
 from pydantic import BaseModel
 

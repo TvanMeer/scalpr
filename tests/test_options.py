@@ -91,3 +91,7 @@ def test_make_streams():
 
     with pytest.raises(ValidationError):
         Options(streams=123)
+
+    o = Options(streams="depth125")
+    assert o.streams == {Stream.DEPTH}
+    assert o._depthcache_size == 125

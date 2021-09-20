@@ -5,7 +5,7 @@ from typing import Callable, Optional, Set
 
 from pydantic import BaseModel, validator
 from pydantic.error_wrappers import ValidationError
-from pydantic.types import DirectoryPath
+from pydantic.types import DirectoryPath, PositiveInt
 
 from .core.constants import Interval, Mode, Stream
 
@@ -23,8 +23,9 @@ class Options(BaseModel):
     quote_assets:     Set[str]                = {"USDT"}
     window_intervals: Set[Interval]           = {Interval.SECOND_2, Interval.MINUTE_1}
     window_length:    int                     = 200
-    streams:          Optional[Set[Stream]]   = {Stream.CANDLE, Stream.DEPTH5, Stream.MINITICKER}
+    streams:          Optional[Set[Stream]]   = {Stream.CANDLE, Stream.DEPTH, Stream.MINITICKER}
     #features:         Optional[Set[Callable]] = None
+    _depthcache_size: int                     = 20
 
 
 
@@ -102,6 +103,9 @@ class Options(BaseModel):
             val = val.upper()
             if val in Stream.list():
                 return Stream(val)
+            elif val[:5] == "DEPTH":
+                Options._depthcache_size = int(val[5:])
+                return Stream("DEPTH")
             else:
                 raise ValidationError("Invalid streams.")
 

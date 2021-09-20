@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime
 
 from scalpr.database.depth import Ask, Bid, Depth
 from scalpr.database.timeframe import TimeFrame

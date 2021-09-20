@@ -1,5 +1,6 @@
 # pylint: disable=no-name-in-module
 
+from collections import deque
 from datetime import datetime
 from typing import Deque, Tuple
 
@@ -26,5 +27,5 @@ class Depth(BaseModel):
     will be saved in Depth.orders.
     """
 
-    orders:            Deque[Tuple[Bid, Ask]]
+    orders:            Deque[Tuple[Bid, Ask]] = deque()
     last_update_time:  datetime

@@ -1,22 +1,15 @@
 from datetime import datetime
-from decimal import Decimal
 
-from scalpr.database.depth import Depth5
+from scalpr.database.depth import Ask, Bid, Depth
 
 
 def test_depth_init():
-    d = Depth5(
-        last_update_time = datetime.now(),
-        bid1= (45724.66000000, 0.00000000),
-        ask1= (45720.40000000, 2.66240200),
-        bid2= (45724.66000000, 0.00000000),
-        ask2= (45720.40000000, 2.66240200),
-        bid3= (45724.66000000, 0.00000000),
-        ask3= (45720.40000000, 2.66240200),
-        bid4= (45724.66000000, 0.00000000),
-        ask4= (45720.40000000, 2.66240200),
-        bid5= (45724.66000000, 0.00000000),
-        ask5= (45720.40000000, 2.66240200)
+    order_1 = (
+        Bid(price=0.123, quantity=12.01), 
+        Ask(price=0.125, quantity=10.47)
     )
-
-    assert d.bid1 == (Decimal('45724.66'), Decimal('0.0'))
+    time = datetime.now()
+    d = Depth(last_update_time=time)
+    d.orders.append(order_1)
+    assert d.orders[0][0].price == 0.123
+    assert d.orders[0][1].price == 0.125

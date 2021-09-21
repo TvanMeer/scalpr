@@ -1,4 +1,7 @@
+import logging
 from typing import Dict, List
+
+from pydantic import ValidationError
 
 from ..core.constants import InTimeFrame
 from ..database.candle import Candle
@@ -14,7 +17,20 @@ class CandlePipe(Pipe):
 
 
     def parse(self, payload: Dict) -> Candle:
-        pass
+        try:
+            return Candle(
+                open_price         =payload["o"],
+                close_price        =payload["c"],
+                high_price         =payload["h"],
+                low_price          =payload["l"],
+                base_volume        =payload["v"],
+                quote_volume       =payload["q"],
+                base_volume_taker  =payload["V"],
+                quote_volume_taker =payload["Q"],
+                n_trades           =payload["n"],
+            )
+        except ValidationError as e:
+            logging.critical(e)
 
  
     def insert_in_first_timeframe(self, parsed: Candle, window: Window) -> Window:

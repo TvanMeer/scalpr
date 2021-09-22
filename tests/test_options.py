@@ -37,9 +37,9 @@ def test_datadir():
 def test_check_asset_names_valid(asset):
     o = Options(base_assets=asset)
     if asset == "BTC":
-        assert o.base_assets == {"btc"}
+        assert o.base_assets == {"BTC"}
     else:
-        assert o.base_assets == {"hot", "donut"}
+        assert o.base_assets == {"HOT", "DONUT"}
 
 
 @pytest.mark.parametrize("asset", ["BT", ["HOT", "DONUTxxxxxxx"], "BT?"])

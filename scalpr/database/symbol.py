@@ -12,5 +12,5 @@ from .window import Window
 class Symbol(BaseModel):
     """Holds all data related to a symbol, such as `BTCUSDT`."""
 
-    name:    constr(strip_whitespace=True, to_lower=True, min_length=3, max_length=6)
+    name:    constr(strip_whitespace=True, min_length=3, max_length=12)
     windows: Dict[Interval, Window] = dict()

@@ -51,11 +51,11 @@ class Options(BaseModel):
 
         if isinstance(v, str):
             check_str(v)
-            return {v.lower()}
+            return {v.upper()}
         elif isinstance(v, Iterable):
             [check_str(s) for s in v]
-            lower = set(map(lambda s: s.lower(), v))
-            return lower
+            upper = set(map(lambda s: s.upper(), v))
+            return upper
         else:
             raise ValidationError("Asset names should be strings.")
 

@@ -33,10 +33,12 @@ def test_datadir():
     with pytest.raises(ValidationError):
         Options(datadir="foo")
 
-@pytest.mark.parametrize("asset", ["BTC", ["HOT", "DONUT"]])
+@pytest.mark.parametrize("asset", ["*","BTC", ["HOT", "DONUT"]])
 def test_check_asset_names_valid(asset):
     o = Options(base_assets=asset)
-    if asset == "BTC":
+    if asset == "*":
+        assert o.base_assets == {"*"}
+    elif asset == "BTC":
         assert o.base_assets == {"BTC"}
     else:
         assert o.base_assets == {"HOT", "DONUT"}

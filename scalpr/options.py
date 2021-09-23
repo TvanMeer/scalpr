@@ -48,8 +48,9 @@ class Options(BaseModel):
                 raise ValidationError("Asset names should be between 3 and 6 characters long.")
             if not s.isalnum():
                 raise ValidationError("Asset names should be alphanumeric, like `BTC` or `USDC`.")
-
-        if isinstance(v, str):
+        if v == "*":
+            return {v}
+        elif isinstance(v, str):
             check_str(v)
             return {v.upper()}
         elif isinstance(v, Iterable):

@@ -36,6 +36,12 @@ def test_select_symbols(exchange_info, options):
     assert "XRPUSDT" in selected
     assert len(selected) == 2
 
+    # All symbols
+    options.base_assets = {"*"}
+    options.quote_assets = {"*"}
+    selected = select_symbols(exchange_info, options)
+    assert len(selected) >= 1613
+
 def test_add_symbols(db):
     selected = {"BTCUSDT", "XRPUSDT"}
     updated_db = add_symbols(selected, db)

@@ -14,8 +14,8 @@ async def download_exchange_info(client: AsyncClient) -> Dict:
 def select_symbols(exchange_info: Dict, options: Options) -> Set[str]:
     selected = set()
     for s in exchange_info["symbols"]:
-        b = s["baseAsset"] in options.base_assets or options.base_assets == "*"
-        q = s["quoteAsset"] in options.quote_assets or options.quote_assets == "*"
+        b = s["baseAsset"] in options.base_assets or options.base_assets == {"*"}
+        q = s["quoteAsset"] in options.quote_assets or options.quote_assets == {"*"}
         a = bool(s["isSpotTradingAllowed"])
         if b and q and a:
             selected.add(s["symbol"])

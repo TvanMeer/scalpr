@@ -119,6 +119,11 @@ class Pipe(ABC):
         close_time = rounded - timedelta(milliseconds=1)
         return close_time
 
+    def to_datetime(self, time: str) -> datetime:
+        """Converts a Binance timestamp to a datetime object."""
+
+        return datetime.fromtimestamp(int(time)/1000)
+
 
     def add_next_empty_timeframe(self, window: Window) -> Window:
         """Adds the next new empty timeframe to window.timeframes."""

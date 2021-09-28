@@ -3,17 +3,12 @@ from typing import Dict, List
 
 from pydantic import ValidationError
 
-from ..core.constants import InTimeFrame
 from ..database.candle import Candle
 from ..database.window import Window
 from .pipe import Pipe
 
 
 class CandlePipe(Pipe):
-
-        
-    def which_timeframe(self, payload: Dict, window: Window) -> InTimeFrame:
-        pass
 
 
     def parse(self, payload: Dict) -> Candle:
@@ -50,10 +45,6 @@ class CandlePipe(Pipe):
 
 
 class HistoricalCandlePipe(Pipe):
-
-        
-    def which_timeframe(self, payload: List, window: Window) -> InTimeFrame:
-        pass
 
 
     def parse(self, payload: List) -> Candle:

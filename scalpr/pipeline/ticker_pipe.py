@@ -1,16 +1,11 @@
 from typing import Dict
 
-from ..core.constants import InTimeFrame
 from ..database.ticker import MiniTicker, Ticker
 from ..database.window import Window
 from .pipe import Pipe
 
 
 class MiniTickerPipe(Pipe):
-
-        
-    def which_timeframe(self, payload: Dict, window: Window) -> InTimeFrame:
-        pass
 
 
     def parse(self, payload: Dict) -> MiniTicker:
@@ -35,10 +30,6 @@ class MiniTickerPipe(Pipe):
 
 
 class TickerPipe(Pipe):
-
-        
-    def which_timeframe(self, payload: Dict, window: Window) -> InTimeFrame:
-        pass
 
 
     def parse(self, payload: Dict) -> Ticker:

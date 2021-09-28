@@ -1,16 +1,11 @@
 from typing import Dict
 
-from ..core.constants import InTimeFrame
 from ..database.trade import AggTrade, Trade
 from ..database.window import Window
 from .pipe import Pipe
 
 
 class AggTradePipe(Pipe):
-
-        
-    def which_timeframe(self, payload: Dict, window: Window) -> InTimeFrame:
-        pass
 
 
     def parse(self, payload: Dict) -> AggTrade:
@@ -35,10 +30,6 @@ class AggTradePipe(Pipe):
 
 
 class TradePipe(Pipe):
-
-        
-    def which_timeframe(self, payload: Dict, window: Window) -> InTimeFrame:
-        pass
 
 
     def parse(self, payload: Dict) -> Trade:

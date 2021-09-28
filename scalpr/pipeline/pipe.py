@@ -1,57 +1,63 @@
 # pylint: disable=no-name-in-module
 
 from abc import ABC, abstractmethod
+from dataclasses import dataclass
 from datetime import datetime, timedelta
-from typing import Any
+from typing import Dict, List, Optional, Union
 
-from pydantic.main import BaseModel
-from scalpr.database.database import DataBase
-from scalpr.database.window import Window
+from pydantic import BaseModel, ValidationError
 
-from ..core.constants import ContentType, InTimeFrame
+from ..core.constants import ContentType, Interval, InTimeFrame
+from ..database.database import DataBase
 from ..database.timeframe import TimeFrame
+from ..database.window import Window
 
+
+@dataclass
+class Message:
+    """A message from the consumer."""
+
+    time:         datetime
+    symbol:       str
+    content_type: ContentType
+    payload:      Union[Dict, List]
+    interval:     Optional[Interval]  =  None
 
 class Pipe(ABC):
     """Handles insertion of content in the database."""
-      
 
-    def process(
-        self, 
-        contenttype: ContentType, 
-        payload:     Any, 
-        meta:        dict, 
-        db:          DataBase
-    ) -> DataBase:
-        """Calls process_window() for the windows that should be updated."""
-
-        symbol   = meta["symbol"]
-        interval = meta["interval"] if "interval" in meta.keys() else None
-
-        def one_window(self):
-            db.symbols[symbol].windows[interval] = self._process_window(
-                payload, db.symbols[symbol].windows[interval]
-            )
-
-        def all_windows(self):
-            for iv, w in db.symbols[symbol].windows.items():
-                db.symbols[symbol].windows[iv] = self._process_window(payload, w)
+    def process(self, message: Message, db: DataBase) -> DataBase:
+        """Updates one or all windows for a symbol."""
 
         apply_on_windows = {
-            ContentType.CANDLE_HISTORY: one_window,
-            ContentType.CANDLE_STREAM:  all_windows,
+            ContentType.CANDLE_HISTORY: self.one_window,
+            ContentType.CANDLE_STREAM:  self.all_windows,
+            #...
         }
-        apply_on_windows[contenttype]()
+        db = apply_on_windows[message.content_type](message, db)
         return db
 
 
-    def _process_window(
-        self,
-        payload:     Any, 
-        window:      Window
-    ) -> Window:
-        """Updates a single window."""
+    def one_window(self, message: Message, db: DataBase) -> DataBase:
+        """Pipes message to a single window for a symbol, by calling process_window."""
 
+        db.symbols[message.symbol].windows[message.interval] = self.process_window(
+            message, db.symbols[message.symbol].windows[message.interval]
+        )
+        return db
+
+
+    def all_windows(self, message: Message, db: DataBase) -> DataBase:
+        """Pipes message to all windows for a symbol, by calling process_window on all windows."""
+
+        for iv, w in db.symbols[message.symbol].windows.items():
+            db.symbols[message.symbol].windows[iv] = self.process_window(message, w)
+        return db
+
+
+
+    def process_window(self, message: Message, window: Window) -> Window:
+        """Updates a single window."""
 
         tf = {
             InTimeFrame.FIRST:    self.insert_in_first_timeframe,
@@ -62,35 +68,54 @@ class Pipe(ABC):
             InTimeFrame.IGNORE:   self.ignore
         }
 
-        in_tf = self.which_timeframe(payload, window)
-        parsed = self.parse(payload)
-        updated_window = tf[in_tf](parsed, window)
-        return updated_window
+        position = self.which_timeframe(message.time, window)
+        parsed = self.parse(message.payload)
+        window = tf[position](parsed, window)
+        return window
+
+
+    def which_timeframe(self, time: datetime, window: Window) -> InTimeFrame:
+        """Determines timeframe where message payload should be inserted."""
+
+        if not window._history_downloaded:
+            return InTimeFrame.IGNORE
+        if not window.timeframes:
+            return InTimeFrame.FIRST
+
+        tf = window.timeframes[-1]
+        milli = timedelta(milliseconds=1)
+        delta = tf.close_time - tf.open_time + milli
+
+        if time > tf.close_time + delta:
+            raise Exception("Error in timeframe creation.")
+        if time > tf.close_time:
+            return InTimeFrame.NEXT
+        if time > tf.open_time:
+            return InTimeFrame.CURRENT
+        if time > tf.open_time - delta:
+            return InTimeFrame.PREVIOUS
+        return InTimeFrame.OTHER
 
 
 
     @abstractmethod
-    def which_timeframe(self, payload: Any, window: Window) -> InTimeFrame:
+    def parse(self, payload: Union[Dict, List]) -> BaseModel:
         raise NotImplementedError
 
     @abstractmethod
-    def parse(self, payload: Any) -> BaseModel:
+    def insert_in_first_timeframe(self, parsed: BaseModel, window: Window) -> Window:
         raise NotImplementedError
 
     @abstractmethod
-    def insert_in_first_timeframe(self, parsed: Any, window: Window) -> Window:
+    def insert_in_previous_timeframe(self, parsed: BaseModel, window: Window) -> Window:
         raise NotImplementedError
 
     @abstractmethod
-    def insert_in_previous_timeframe(self, parsed: Any, window: Window) -> Window:
+    def insert_in_current_timeframe(self, parsed: BaseModel, window: Window) -> Window:
         raise NotImplementedError
 
     @abstractmethod
-    def insert_in_current_timeframe(self, parsed: Any, window: Window) -> Window:
-        raise NotImplementedError
-
-    @abstractmethod
-    def insert_in_next_timeframe(self, parsed: Any, window: Window) -> Window:
+    def insert_in_next_timeframe(self, parsed: BaseModel, window: Window) -> Window:
         raise NotImplementedError
 
 
@@ -103,6 +128,7 @@ class Pipe(ABC):
         of your feature calculation functions.
         """
         raise Exception(e)
+
 
     def ignore(self, *args):
         """Ignore payload."""
@@ -119,10 +145,25 @@ class Pipe(ABC):
         close_time = rounded - timedelta(milliseconds=1)
         return close_time
 
+
     def to_datetime(self, time: str) -> datetime:
         """Converts a Binance timestamp to a datetime object."""
 
         return datetime.fromtimestamp(int(time)/1000)
+
+
+    def add_empty_timeframe(self, open_time: datetime, close_time: datetime, window: Window) -> Window:
+        """Adds an empty timeframe to window.timeframes"""
+
+        try:
+            tf = TimeFrame(
+                open_time  = open_time,
+                close_time = close_time,
+            )
+            window.timeframes.append(tf)
+            return window
+        except ValidationError as e:
+            raise Exception(e)
 
 
     def add_next_empty_timeframe(self, window: Window) -> Window:
@@ -132,9 +173,7 @@ class Pipe(ABC):
         prev_ct = window.timeframes[-1].close_time
         milli = timedelta(milliseconds=1)
         delta = prev_ct - prev_ot + milli
-        tf = TimeFrame(
-            open_time  = prev_ot + delta,
-            close_time = prev_ct + delta
-        )
-        window.timeframes.append(tf)
+        open_time = prev_ot + delta
+        close_time = prev_ct + delta
+        window = self.add_empty_timeframe(open_time, close_time, window)
         return window

@@ -155,7 +155,8 @@ class Pipe(ABC):
         return close_time
 
 
-    def to_datetime(self, time: str) -> datetime:
+    @staticmethod
+    def to_datetime(time: str) -> datetime:
         """Converts a Binance timestamp to a datetime object."""
 
         return datetime.fromtimestamp(int(time)/1000)

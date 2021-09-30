@@ -5,10 +5,14 @@ from pydantic import ValidationError
 
 from ..database.candle import Candle
 from ..database.window import Window
-from .pipe import Pipe
+from .pipe import Message, Pipe
 
 
 class CandlePipe(Pipe):
+
+
+    def before(self, message: Message, window: Window) -> Window:
+        pass
 
 
     def parse(self, payload: Dict) -> Candle:
@@ -27,8 +31,8 @@ class CandlePipe(Pipe):
         except ValidationError as e:
             logging.critical(e)
 
- 
-    def insert_in_first_timeframe(self, parsed: Candle, window: Window) -> Window:
+
+    def validate(self, message: Message, window: Window) -> bool:
         pass
 
 
@@ -47,11 +51,19 @@ class CandlePipe(Pipe):
 class HistoricalCandlePipe(Pipe):
 
 
+    def before(self, message: Message, window: Window) -> Window:
+        pass
+
+
     def parse(self, payload: List) -> Candle:
         pass
 
- 
-    def insert_in_first_timeframe(self, parsed: Candle, window: Window) -> Window:
+
+    def validate(self, message: Message, window: Window) -> bool:
+        pass
+
+
+    def insert_in_first_timeframe(self, message: Message, window: Window) -> Window:
         pass
 
 

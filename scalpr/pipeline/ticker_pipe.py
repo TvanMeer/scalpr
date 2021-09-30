@@ -1,52 +1,54 @@
-from typing import Dict
+# pylint: disable=no-name-in-module
+
+from typing import Dict, List, Union
+
+from pydantic import BaseModel
 
 from ..database.ticker import MiniTicker, Ticker
 from ..database.window import Window
-from .pipe import Pipe
+from .pipe import Message, Pipe
 
 
 class MiniTickerPipe(Pipe):
 
 
-    def parse(self, payload: Dict) -> MiniTicker:
-        pass
+    def before(self, message: Message, window: Window) -> Window:
+        raise NotImplementedError
 
- 
-    def insert_in_first_timeframe(self, parsed: MiniTicker, window: Window) -> Window:
-        pass
+    def parse(self, payload: Union[Dict, List]) -> BaseModel:
+        raise NotImplementedError
 
+    def validate(self, message: Message, window: Window) -> bool:
+        raise NotImplementedError
 
-    def insert_in_previous_timeframe(self, parsed: MiniTicker, window: Window) -> Window:
-        pass
+    def insert_in_previous_timeframe(self, message: Message, window: Window) -> Window:
+        raise NotImplementedError
 
+    def insert_in_current_timeframe(self, message: Message, window: Window) -> Window:
+        raise NotImplementedError
 
-    def insert_in_current_timeframe(self, parsed: MiniTicker, window: Window) -> Window:
-        pass
-
-    
-    def insert_in_next_timeframe(self, parsed: MiniTicker, window: Window) -> Window:
-        pass
+    def insert_in_next_timeframe(self, message: Message, window: Window) -> Window:
+        raise NotImplementedError
 
 
 
 class TickerPipe(Pipe):
 
 
-    def parse(self, payload: Dict) -> Ticker:
-        pass
+    def before(self, message: Message, window: Window) -> Window:
+        raise NotImplementedError
 
- 
-    def insert_in_first_timeframe(self, parsed: Ticker, window: Window) -> Window:
-        pass
+    def parse(self, payload: Union[Dict, List]) -> BaseModel:
+        raise NotImplementedError
 
+    def validate(self, message: Message, window: Window) -> bool:
+        raise NotImplementedError
 
-    def insert_in_previous_timeframe(self, parsed: Ticker, window: Window) -> Window:
-        pass
+    def insert_in_previous_timeframe(self, message: Message, window: Window) -> Window:
+        raise NotImplementedError
 
+    def insert_in_current_timeframe(self, message: Message, window: Window) -> Window:
+        raise NotImplementedError
 
-    def insert_in_current_timeframe(self, parsed: Ticker, window: Window) -> Window:
-        pass
-
-    
-    def insert_in_next_timeframe(self, parsed: Ticker, window: Window) -> Window:
-        pass
+    def insert_in_next_timeframe(self, message: Message, window: Window) -> Window:
+        raise NotImplementedError

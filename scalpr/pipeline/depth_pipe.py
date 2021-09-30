@@ -1,28 +1,31 @@
-from typing import List, Tuple
+# pylint: disable=no-name-in-module
+
+from typing import Dict, List, Union
+
+from pydantic import BaseModel
 
 from ..database.depth import Depth
 from ..database.window import Window
-from .pipe import Pipe
+from .pipe import Message, Pipe
 
 
 class DepthPipe(Pipe):
 
 
-    def parse(self, payload: Tuple[List[List], List[List]]) -> Depth:
-        pass
+    def before(self, message: Message, window: Window) -> Window:
+        raise NotImplementedError
 
- 
-    def insert_in_first_timeframe(self, parsed: Depth, window: Window) -> Window:
-        pass
+    def parse(self, payload: Union[Dict, List]) -> BaseModel:
+        raise NotImplementedError
 
+    def validate(self, message: Message, window: Window) -> bool:
+        raise NotImplementedError
 
-    def insert_in_previous_timeframe(self, parsed: Depth, window: Window) -> Window:
-        pass
+    def insert_in_previous_timeframe(self, message: Message, window: Window) -> Window:
+        raise NotImplementedError
 
+    def insert_in_current_timeframe(self, message: Message, window: Window) -> Window:
+        raise NotImplementedError
 
-    def insert_in_current_timeframe(self, parsed: Depth, window: Window) -> Window:
-        pass
-
-    
-    def insert_in_next_timeframe(self, parsed: Depth, window: Window) -> Window:
-        pass
+    def insert_in_next_timeframe(self, message: Message, window: Window) -> Window:
+        raise NotImplementedError

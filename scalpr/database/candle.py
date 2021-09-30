@@ -66,4 +66,3 @@ class Candle(BaseModel):
     base_volume_taker:  condecimal(decimal_places=8)        # V   9
     quote_volume_taker: condecimal(decimal_places=8)        # Q   10
     n_trades:           PositiveInt                         # n   8
-    corrupt:            bool = False

@@ -22,6 +22,7 @@ class TimeFrame(BaseModel):
 
     open_time:          datetime
     close_time:         datetime
+    corrupt:            bool                   = False
 
     candle:             Optional[Candle]       = None
     miniticker:         Optional[MiniTicker]   = None

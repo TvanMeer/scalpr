@@ -21,7 +21,8 @@ class Message:
     symbol:       str
     content_type: ContentType
     payload:      Union[Dict, List]
-    interval:     Optional[Interval]  =  None
+    interval:     Optional[Interval]  = None
+    parsed:       Optional[BaseModel] = None
 
 class Pipe(ABC):
     """Handles insertion of content in the database."""
@@ -64,76 +65,84 @@ class Pipe(ABC):
             InTimeFrame.PREVIOUS: self.insert_in_previous_timeframe,
             InTimeFrame.CURRENT:  self.insert_in_current_timeframe,
             InTimeFrame.NEXT:     self.insert_in_next_timeframe,
-            InTimeFrame.OTHER:    self.data_leakage_error,
-            InTimeFrame.IGNORE:   self.ignore
         }
 
-        position = self.which_timeframe(message.time, window)
-        parsed = self.parse(message.payload)
-        window = tf[position](parsed, window)
+        position = self.which_timeframe(message, window)
+        if position == InTimeFrame.IGNORE:
+            pass
+        if position == InTimeFrame.OTHER:
+            self.data_leakage_error()
+
+        window = self.before(message, window)
+        message.parsed = self.parse(message.payload)
+        window.timeframes[-1].corrupt = self.validate(message, window)
+        window = tf[position](message, window)
         return window
 
 
-    def which_timeframe(self, time: datetime, window: Window) -> InTimeFrame:
-        """Determines timeframe where message payload should be inserted."""
+    def which_timeframe(self, message: Message, window: Window) -> InTimeFrame:
+        """Determines timeframe position where message payload should be inserted."""
 
+        if not window.timeframes:
+            if message.content_type == ContentType.CANDLE_HISTORY:
+                return InTimeFrame.FIRST
+            else:
+                return InTimeFrame.IGNORE
         if not window._history_downloaded:
             return InTimeFrame.IGNORE
-        if not window.timeframes:
-            return InTimeFrame.FIRST
 
         tf = window.timeframes[-1]
         milli = timedelta(milliseconds=1)
         delta = tf.close_time - tf.open_time + milli
 
-        if time > tf.close_time + delta:
+        if message.time > tf.close_time + delta:
             raise Exception("Error in timeframe creation.")
-        if time > tf.close_time:
+        if message.time > tf.close_time:
             return InTimeFrame.NEXT
-        if time > tf.open_time:
+        if message.time > tf.open_time:
             return InTimeFrame.CURRENT
-        if time > tf.open_time - delta:
+        if message.time > tf.open_time - delta:
             return InTimeFrame.PREVIOUS
         return InTimeFrame.OTHER
 
 
+    @abstractmethod
+    def before(self, message: Message, window: Window) -> Window:
+        raise NotImplementedError
 
     @abstractmethod
     def parse(self, payload: Union[Dict, List]) -> BaseModel:
         raise NotImplementedError
 
     @abstractmethod
-    def insert_in_first_timeframe(self, parsed: BaseModel, window: Window) -> Window:
+    def validate(self, message: Message, window: Window) -> bool:
+        raise NotImplementedError
+
+    def insert_in_first_timeframe(self, message: Message, window: Window) -> Window:
+        raise NotImplementedError # Overwritten in HistoricalCandlePipe
+
+    @abstractmethod
+    def insert_in_previous_timeframe(self, message: Message, window: Window) -> Window:
         raise NotImplementedError
 
     @abstractmethod
-    def insert_in_previous_timeframe(self, parsed: BaseModel, window: Window) -> Window:
+    def insert_in_current_timeframe(self, message: Message, window: Window) -> Window:
         raise NotImplementedError
 
     @abstractmethod
-    def insert_in_current_timeframe(self, parsed: BaseModel, window: Window) -> Window:
-        raise NotImplementedError
-
-    @abstractmethod
-    def insert_in_next_timeframe(self, parsed: BaseModel, window: Window) -> Window:
+    def insert_in_next_timeframe(self, message: Message, window: Window) -> Window:
         raise NotImplementedError
 
 
 
     # Helper funcs ------------------------------------------------------------
 
-    def data_leakage_error(self, *args):
+    def data_leakage_error(self):
         e = """Data leakage: bbot cannot process the data fast enough. 
         Reduce the number of data sources or try to increase the performance
         of your feature calculation functions.
         """
         raise Exception(e)
-
-
-    def ignore(self, *args):
-        """Ignore payload."""
-
-        pass
 
 
     def round_time(self, close_time: datetime):

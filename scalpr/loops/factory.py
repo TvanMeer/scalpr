@@ -17,12 +17,12 @@ class CoroFactory:
     They all run concurrently.
     """
 
-    def __init__(self, db: DataBase, client: AsyncClient, manager: BinanceSocketManager):
+    def __init__(self, db: DataBase, shared_variables: Shared, client: AsyncClient, manager: BinanceSocketManager):
         self.db = db
         self.mode = db.options.mode
         self.streams = db.options.streams
         self.symbols = db.selected_symbols
-        self.shared = Shared()
+        self.shared = shared_variables
         self.manager = manager
         self.client = client
 

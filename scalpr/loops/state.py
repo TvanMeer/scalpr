@@ -14,9 +14,9 @@ class SharedState:
     """
 
     db:                         DataBase
+    user_input_queue:           Queue
     stop:                       bool          = False
     queue:                      asyncio.Queue = asyncio.Queue()
-    user_input_queue:           Queue         = Queue()
     history_downloaded:         Dict          = field(init=False)
     last_candles_update:        Dict          = field(init=False)
     last_candles_update_closed: Dict          = field(init=False)

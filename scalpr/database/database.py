@@ -35,11 +35,10 @@ class DataBase(BaseModel):
     db.symbols["btcusdc"].windows[Interval.minute_1].timeframes[-1].candle
     """
 
-    options:                Options
-    all_symbols_at_binance: Set[str]          = set()
-    selected_symbols:       Set[str]          = set()
+    options:          Options
+    selected_symbols: Set[str] = set()
     # exchange info
     # account info
 
-    symbols:                Dict[str, Symbol] = dict()
+    symbols:          Dict[str, Symbol] = dict()
     # user events

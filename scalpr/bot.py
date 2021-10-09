@@ -1,21 +1,11 @@
-from dataclasses import dataclass
 from queue import Queue
 from threading import Thread
 from typing import Any
 
 from .core.constants import Interval
 from .core.manager import Manager
+from .core.message import UserInput
 from .options import Options
-
-
-@dataclass
-class _Input:
-    shutdown:    bool     = False
-    get_db:      bool     = False
-    symbol:      str      = None
-    window:      Interval = None
-    timeframe:   int      = None
-    as_datatype: str      = "nested_class"
 
 
 class Bot:
@@ -31,7 +21,7 @@ class Bot:
         m.start(options, queue)
 
 
-    def _query(self, inp: _Input) -> Any:
+    def _query(self, inp: UserInput) -> Any:
         self._queue.put(inp)
         self._queue.join()
         resp = self._queue.get()
@@ -40,21 +30,21 @@ class Bot:
 
     # Public interface
     def get_database(self, as_datatype="nested_class") -> Any:
-        inp = _Input()
+        inp = UserInput()
         inp.get_db = True
         inp.as_datatype = as_datatype
         return self._query(inp)
 
 
     def get_symbol(self, symbol: str, as_datatype="nested_class") -> Any:
-        inp = _Input()
+        inp = UserInput()
         inp.symbol = symbol
         inp.as_datatype = as_datatype
         return self._query(inp)
 
 
     def get_window(self, symbol: str, interval: str, as_datatype="nested_class") -> Any:
-        inp = _Input()
+        inp = UserInput()
         inp.symbol = symbol
         inp.window = Interval(interval)
         inp.as_datatype = as_datatype
@@ -62,7 +52,7 @@ class Bot:
 
 
     def get_timeframe(self, symbol: str, interval: str, index: int, as_datatype="nested_class") -> Any:
-        inp = _Input()
+        inp = UserInput()
         inp.symbol = symbol
         inp.window = Interval(interval)
         inp.timeframe = index
@@ -72,7 +62,7 @@ class Bot:
 
     def stop(self):
         print("Shutting down Scalpr...")
-        inp = _Input()
+        inp = UserInput()
         inp.shutdown = True
         _ = self._query(inp)
         self._manager.join()

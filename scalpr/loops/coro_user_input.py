@@ -5,7 +5,7 @@ from typing import Any
 
 from pydantic import BaseModel
 
-from ..bot import _Input
+from ..core.message import UserInput
 from .state import SharedState
 
 
@@ -18,7 +18,7 @@ def format_response(data: BaseModel, formatting: str) -> Any:
         return data.to_dict()
 
 
-def query_db(user_input: _Input, state: SharedState) -> Any:
+def query_db(user_input: UserInput, state: SharedState) -> Any:
     """Helperfunc for user_input_listener."""
 
     formatting = user_input.as_datatype

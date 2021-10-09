@@ -68,6 +68,7 @@ async def historical_candle_producer(state: SharedState, client: AsyncClient):
 
 
 def fake_candle(i: int, symbol: str) -> Dict:
+    """Helper func for mock candle producer."""
 
     t = 1632800640000
     T = 1632800699999

@@ -1,4 +1,5 @@
 import asyncio
+from typing import Dict
 
 from binance import AsyncClient, BinanceSocketManager
 
@@ -65,5 +66,53 @@ async def historical_candle_producer(state: SharedState, client: AsyncClient):
             if state.stop: break
 
 
+
+def fake_candle(i: int, symbol: str) -> Dict:
+
+    t = 1632800640000
+    T = 1632800699999
+    t += i * 60000
+    T += i * 60000
+
+    return {
+        "e": "kline",
+        "E": t + 10000,
+        "s": "BTCUSDT",
+        "k": {
+            "t": t,
+            "T": T,
+            "s": "BTCUSDT",
+            "i": "1m",
+            "f": i * 1000000000,
+            "L": i * 1000000100,
+            "o": str(i * 10000) + ".00000000",
+            "c": str(i * 11000) + ".00000000",
+            "h": str(i * 11500) + ".00000000",
+            "l": str(i * 9500)  + ".00000000",
+            "v": str(i * 0.25)  + "000000",
+            "n": i * 10,
+            "x": False,
+            "q": str(i * 10000) + ".00000000",
+            "V": str(i * 0.1)   + "0000000",
+            "Q": str(i * 5000)  + ".00000000",
+            "B": "0"
+        }
+    }
+
+
 async def mock_candle_producer(state: SharedState, symbol: str):
-    pass #TODO
+    """Produces a fake candle, every two seconds."""
+
+    i = 1
+    while not state.stop:
+        asyncio.sleep(2)
+        raw_candle = fake_candle(i, symbol)
+        message = Message(
+                time         =Pipe.to_datetime(time=raw_candle["k"]["T"]),
+                symbol       =symbol,
+                content_type =ContentType.CANDLE_STREAM,
+                payload      =raw_candle
+            )
+        await state.queue.put(message)
+        next_i = i + 1 if i <= 10 else 1
+        i = next_i

@@ -5,7 +5,7 @@ from binance import AsyncClient, BinanceSocketManager
 
 from ..core.constants import ContentType
 from ..pipeline.pipe import Message, Pipe
-from .state import SharedState
+from ..core.state import SharedState
 
 
 async def candle_producer(state: SharedState, symbol: str, manager: BinanceSocketManager):

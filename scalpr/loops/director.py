@@ -4,8 +4,8 @@ from typing import List
 
 from binance import AsyncClient, BinanceSocketManager
 
+from ..core.state import SharedState
 from .builder import ConcreteBuilder
-from .state import SharedState
 
 
 class Director(ABC):

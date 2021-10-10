@@ -6,7 +6,7 @@ from binance import AsyncClient, BinanceSocketManager
 
 from ..core.constants import Stream
 from . import coro_candle, coro_consumer, coro_user_input
-from .state import SharedState
+from ..core.state import SharedState
 
 
 class Builder(ABC):

@@ -6,7 +6,7 @@ from typing import Any
 from pydantic import BaseModel
 
 from ..core.message import UserInput
-from .state import SharedState
+from ..core.state import SharedState
 
 
 def format_response(data: BaseModel, formatting: str) -> Any:

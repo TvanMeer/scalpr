@@ -1,6 +1,6 @@
 from ..core.constants import ContentType
 from ..pipeline.candle_pipe import CandlePipe, HistoricalCandlePipe
-from .state import SharedState
+from ..core.state import SharedState
 
 
 async def consumer(state: SharedState):

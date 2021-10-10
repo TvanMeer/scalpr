@@ -1,28 +1,17 @@
 # pylint: disable=no-name-in-module
 
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Union
+from typing import Dict, List, Union
 
 from pydantic import BaseModel, ValidationError
 
-from ..core.constants import ContentType, Interval, InTimeFrame
+from ..core.constants import ContentType, InTimeFrame
+from ..core.message import Message
 from ..database.database import DataBase
 from ..database.timeframe import TimeFrame
 from ..database.window import Window
 
-
-@dataclass
-class Message:
-    """A message from the consumer."""
-
-    time:         datetime
-    symbol:       str
-    content_type: ContentType
-    payload:      Union[Dict, List]
-    interval:     Optional[Interval]  = None
-    parsed:       Optional[BaseModel] = None
 
 class Pipe(ABC):
     """Handles insertion of content in the database."""

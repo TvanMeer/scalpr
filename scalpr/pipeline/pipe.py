@@ -66,11 +66,15 @@ class Pipe(ABC):
 
 
     def which_timeframe(self, message: Message, state: SharedState, window: Window) -> InTimeFrame:
+        """Determines in which timeframe message.payload should be inserted."""
+
         if not window.timeframes:
-            if message.content_type == ContentType.CANDLE_HISTORY:
-                return InTimeFrame.FIRST
-            else:
-                return InTimeFrame.IGNORE
+            match message.content_type:
+                case ContentType.CANDLE_HISTORY:
+                    return InTimeFrame.FIRST
+                case _:
+                    return InTimeFrame.IGNORE
+            
         if not state.history_downloaded:
             return InTimeFrame.IGNORE
 
@@ -90,6 +94,8 @@ class Pipe(ABC):
 
 
     def create_timeframe(self, open_time: datetime, close_time: datetime, window: Window) -> Window:
+        """Creates a new TimeFrame instance. Appends the new instance to the deque of timeframes in the window."""
+
         try:
             new_tf = TimeFrame(
                 open_time=open_time,
@@ -101,6 +107,8 @@ class Pipe(ABC):
 
 
     def create_first_timeframe(self, message: Message, window: Window) -> Window:
+        """Creates and adds the very first timeframe in an empty window."""
+
         match message.content_type:
             case ContentType.CANDLE_HISTORY:
                 open_time = self.to_datetime(message.payload[0])
@@ -111,6 +119,8 @@ class Pipe(ABC):
 
 
     def create_next_timeframe(self, window: Window) -> Window:
+        """Creates and adds the next new empty timeframe in the deque of window.timeframes."""
+
         last_tf = window[-1]
         last_open = last_tf.open_time
         last_close = last_tf.close_time
@@ -148,6 +158,7 @@ class Pipe(ABC):
 
     # Helper functions ---------------------------------------------------------
 
+
     def to_datetime(self, time: str) -> datetime:
         """Converts a Binance timestamp to a datetime object."""
 
@@ -155,8 +166,8 @@ class Pipe(ABC):
 
 
     def round_time(self, close_time: datetime):
-        """Rounds time to closest possible 2-second close time -1ms.
-        Used to get 2 second candle close time based on event time.
+        """Rounds close_time to the closest second. Then substracts 1ms.
+        Used to calculate Interval.SECONDS_2 candle close time based on event time.
         """
       
         rounded = close_time - timedelta(microseconds=close_time.microsecond)

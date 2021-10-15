@@ -1,12 +1,10 @@
-# pylint: disable=no-name-in-module
-
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Dict, List, Optional, Union
 
 from pydantic import BaseModel
 
-from .constants import ContentType, Interval
+from .constants import ContentType, Interval, InTimeFrame
 
 
 @dataclass
@@ -31,9 +29,11 @@ class Message:
     pipeline.
     """
 
-    time:         datetime
     symbol:       str
     content_type: ContentType
     payload:      Union[Dict, List]
-    interval:     Optional[Interval]  = None
-    parsed:       Optional[BaseModel] = None
+    interval:     Optional[Interval]    = None  # Added in historical data loops or pipeline
+    close_time:   Optional[datetime]    = None  # Added in pipeline
+    parsed:       Optional[BaseModel]   = None  # Added in pipeline
+    corrupt:      Optional[bool]        = None  # Added in pipeline
+    in_timeframe: Optional[InTimeFrame] = None  # Added in pipeline

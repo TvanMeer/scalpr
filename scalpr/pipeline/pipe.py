@@ -1,137 +1,157 @@
-# pylint: disable=no-name-in-module
-
 from abc import ABC, abstractmethod
 from datetime import datetime, timedelta
-from typing import Dict, List, Union
 
 from pydantic import BaseModel, ValidationError
 
 from ..core.constants import ContentType, InTimeFrame
 from ..core.message import Message
-from ..database.database import DataBase
+from ..core.state import SharedState
 from ..database.timeframe import TimeFrame
 from ..database.window import Window
 
 
 class Pipe(ABC):
-    """Handles insertion of content in the database."""
+    """Handles parsing and insertion of a Message object into the database."""
 
-    def process(self, message: Message, db: DataBase) -> DataBase:
-        """Updates one or all windows for a symbol."""
+    def process(self, message: Message, state: SharedState) -> SharedState:
+        """Template method that sends the message through the pipeline."""
 
-        apply_on_windows = {
-            ContentType.CANDLE_HISTORY: self.one_window,
-            ContentType.CANDLE_STREAM:  self.all_windows,
-            #...
-        }
-        db = apply_on_windows[message.content_type](message, db)
-        return db
-
-
-    def one_window(self, message: Message, db: DataBase) -> DataBase:
-        """Pipes message to a single window for a symbol, by calling process_window."""
-
-        db.symbols[message.symbol].windows[message.interval] = self.process_window(
-            message, db.symbols[message.symbol].windows[message.interval]
-        )
-        return db
+        message.close_time = self.get_close_time(message)   # Child function call
+        message.parsed = self.parse(message)                # Child function call
+        message.corrupt = self.validate(message, state)     # Child function call
+        state = self.update_state(message, state)           # Child function call
+        state = self.insert_in_db(message, state)           # Executes all super functions
+        return state
 
 
-    def all_windows(self, message: Message, db: DataBase) -> DataBase:
-        """Pipes message to all windows for a symbol, by calling process_window on all windows."""
-
-        for iv, w in db.symbols[message.symbol].windows.items():
-            db.symbols[message.symbol].windows[iv] = self.process_window(message, w)
-        return db
-
+    def insert_in_db(self, message: Message, state: SharedState) -> SharedState:
+        if message.interval:
+            return self.insert_in_window(message, state)
+        else:
+            return self.insert_in_all_windows(message, state)
 
 
-    def process_window(self, message: Message, window: Window) -> Window:
-        """Updates a single window."""
-
-        tf = {
-            InTimeFrame.FIRST:    self.insert_in_first_timeframe,
-            InTimeFrame.PREVIOUS: self.insert_in_previous_timeframe,
-            InTimeFrame.CURRENT:  self.insert_in_current_timeframe,
-            InTimeFrame.NEXT:     self.insert_in_next_timeframe,
-        }
-
-        position = self.which_timeframe(message, window)
-        if position == InTimeFrame.IGNORE:
-            pass
-        if position == InTimeFrame.OTHER:
-            self.data_leakage_error()
-
-        window = self.before(message, window)
-        message.parsed = self.parse(message.payload)
-        window.timeframes[-1].corrupt = self.validate(message, window)
-        window = tf[position](message, window)
-        return window
+    def insert_in_all_windows(self, message: Message, state: SharedState) -> SharedState:
+        for interval in state.db.options.window_intervals:
+            message.interval = interval
+            return self.insert_in_window(message, state)
 
 
-    def which_timeframe(self, message: Message, window: Window) -> InTimeFrame:
-        """Determines timeframe position where message payload should be inserted."""
+    def insert_in_window(self, message: Message, state: SharedState) -> SharedState:
+        window = state.db.symbols[message.symbol].windows[message.interval]
+        updated_window = self.insert_in_timeframe(message, state, window)
+        state.db.symbols[message.symbol].windows[message.interval] = updated_window
+        return state
 
+
+    def insert_in_timeframe(self, message: Message, state: SharedState, window: Window) -> Window:
+        in_timeframe = self.which_timeframe(message, state, window)
+        match in_timeframe:
+            case InTimeFrame.IGNORE:
+                return window
+            case InTimeFrame.FIRST:
+                window = self.create_first_timeframe(message, window)
+                return self.first_in_timeframe(message, window, in_timeframe)
+            case InTimeFrame.PREVIOUS:
+                return self.update_timeframe(message, window, in_timeframe)
+            case InTimeFrame.CURRENT:
+                return self.update_timeframe(message, window, in_timeframe)
+            case InTimeFrame.NEXT:
+                window = self.create_next_timeframe(window)
+                return self.first_in_timeframe(message, window, in_timeframe)
+            case InTimeFrame.OTHER:
+                e = """Cannot keep up with data processing. 
+                Perhaps you selected too many streams."""
+                raise Exception(e)
+
+
+    def which_timeframe(self, message: Message, state: SharedState, window: Window) -> InTimeFrame:
         if not window.timeframes:
             if message.content_type == ContentType.CANDLE_HISTORY:
                 return InTimeFrame.FIRST
             else:
                 return InTimeFrame.IGNORE
-        if not window._history_downloaded:
+        if not state.history_downloaded:
             return InTimeFrame.IGNORE
 
         tf = window.timeframes[-1]
         milli = timedelta(milliseconds=1)
         delta = tf.close_time - tf.open_time + milli
 
-        if message.time > tf.close_time + delta:
-            raise Exception("Error in timeframe creation.")
-        if message.time > tf.close_time:
+        if message.close_time > tf.close_time + delta:
+            raise Exception("Timing error in timeframe creation.")
+        if message.close_time > tf.close_time:
             return InTimeFrame.NEXT
-        if message.time > tf.open_time:
+        if message.close_time > tf.open_time:
             return InTimeFrame.CURRENT
-        if message.time > tf.open_time - delta:
+        if message.close_time > tf.open_time - delta:
             return InTimeFrame.PREVIOUS
         return InTimeFrame.OTHER
 
 
-    @abstractmethod
-    def before(self, message: Message, window: Window) -> Window:
-        raise NotImplementedError
+    def create_timeframe(self, open_time: datetime, close_time: datetime, window: Window) -> Window:
+        try:
+            new_tf = TimeFrame(
+                open_time=open_time,
+                close_time=close_time
+            )
+            return window.timeframes.append(new_tf)
+        except ValidationError as e:
+            print(e)
+
+
+    def create_first_timeframe(self, message: Message, window: Window) -> Window:
+        match message.content_type:
+            case ContentType.CANDLE_HISTORY:
+                open_time = self.to_datetime(message.payload[0])
+                close_time = self.to_datetime(message.payload[6])
+                return self.create_timeframe(open_time, close_time, window)
+            case _:
+                raise Exception(f"Cannot create first timeframe with {message.content_type.value}.")
+
+
+    def create_next_timeframe(self, window: Window) -> Window:
+        last_tf = window[-1]
+        last_open = last_tf.open_time
+        last_close = last_tf.close_time
+        milli = timedelta(milliseconds=1)
+        delta = last_close - last_open + milli
+        return self.create_timeframe(last_open + delta, last_close + delta, window)
+
 
     @abstractmethod
-    def parse(self, payload: Union[Dict, List]) -> BaseModel:
-        raise NotImplementedError
+    def get_close_time(self, message: Message) -> datetime:
+        """Returns the close time or event time of content in message."""
 
     @abstractmethod
-    def validate(self, message: Message, window: Window) -> bool:
-        raise NotImplementedError
-
-    def insert_in_first_timeframe(self, message: Message, window: Window) -> Window:
-        raise NotImplementedError # Overwritten in HistoricalCandlePipe
+    def parse(self, message: Message) -> BaseModel:
+        """Parses message.payload and returns a pydantic BaseModel."""
 
     @abstractmethod
-    def insert_in_previous_timeframe(self, message: Message, window: Window) -> Window:
-        raise NotImplementedError
+    def validate(self, message: Message, state: SharedState) -> bool:
+        """Returns True if the data in message.payload is corrupt."""
 
     @abstractmethod
-    def insert_in_current_timeframe(self, message: Message, window: Window) -> Window:
-        raise NotImplementedError
+    def update_state(self, message: Message, state: SharedState) -> SharedState:
+        """Updates variables in state, excluding state.db"""
 
     @abstractmethod
-    def insert_in_next_timeframe(self, message: Message, window: Window) -> Window:
-        raise NotImplementedError
-
-
-
-    # Helper funcs ------------------------------------------------------------
-
-    def data_leakage_error(self):
-        e = """Data leakage: bbot cannot process the data fast enough. 
-        Reduce the number of data sources or try to increase the performance
-        of your feature calculation functions.
+    def first_in_timeframe(self, message: Message, window: Window, position: InTimeFrame) -> Window:
+        """Inserts message.payload in the first timeframe of the window, or in
+        the next empty timeframe that has just been created.
         """
-        raise Exception(e)
+
+    @abstractmethod
+    def update_timeframe(self, message: Message, window: Window, position: InTimeFrame) -> Window:
+        """Updates the current or previous timeframe with message.payload."""
+
+
+    # Helper functions ---------------------------------------------------------
+
+    def to_datetime(self, time: str) -> datetime:
+        """Converts a Binance timestamp to a datetime object."""
+
+        return datetime.fromtimestamp(int(time)/1000)
 
 
     def round_time(self, close_time: datetime):
@@ -144,35 +164,6 @@ class Pipe(ABC):
         return close_time
 
 
-    @staticmethod
-    def to_datetime(time: str) -> datetime:
-        """Converts a Binance timestamp to a datetime object."""
+    
 
-        return datetime.fromtimestamp(int(time)/1000)
-
-
-    def add_empty_timeframe(self, open_time: datetime, close_time: datetime, window: Window) -> Window:
-        """Adds an empty timeframe to window.timeframes"""
-
-        try:
-            tf = TimeFrame(
-                open_time  = open_time,
-                close_time = close_time,
-            )
-            window.timeframes.append(tf)
-            return window
-        except ValidationError as e:
-            raise Exception(e)
-
-
-    def add_next_empty_timeframe(self, window: Window) -> Window:
-        """Adds the next new empty timeframe to window.timeframes."""
-
-        prev_ot = window.timeframes[-1].open_time
-        prev_ct = window.timeframes[-1].close_time
-        milli = timedelta(milliseconds=1)
-        delta = prev_ct - prev_ot + milli
-        open_time = prev_ot + delta
-        close_time = prev_ct + delta
-        window = self.add_empty_timeframe(open_time, close_time, window)
-        return window
+        

@@ -66,15 +66,15 @@ class Trade(Leaf):
 
 @dataclass
 class Bid(Leaf):
-    price:          Decimal
-    quantity:       Decimal
-    cumulative_sum: Decimal
+    price:    Decimal
+    quantity: Decimal
+    cumsum:   Decimal
 
 @dataclass
 class Ask(Leaf):
-    price:          Decimal
-    quantity:       Decimal
-    cumulative_sum: Decimal
+    price:    Decimal
+    quantity: Decimal
+    cumsum:   Decimal
 
 @dataclass
 class OrderBookAtOpen(Leaf):

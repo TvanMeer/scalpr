@@ -1,15 +1,13 @@
 from collections import deque
+from dataclasses import dataclass
 from datetime import datetime, timedelta
-from typing import Deque, Dict, List, Optional, Set, TypeVar
-
-from pydantic import BaseModel, condecimal, constr
+from decimal import Decimal
+from typing import Optional
 
 from ..options import Options
 
-LargeNum = TypeVar("LargeNum", bound=condecimal(decimal_places=8, gt=0))
 
-
-class TreeElement(BaseModel):
+class TreeElement():
     """All realtime data is merged in a tree, with the following nested structure:
     
     Data
@@ -29,58 +27,64 @@ class Branch(TreeElement):
 class Leaf(TreeElement):
     ...
 
-
+@dataclass
 class Candle(Leaf):
     """Candle data that spawns the time interval of the parent timeframe."""
 
-    open_price:              LargeNum
-    close_price:             LargeNum
-    high_price:              LargeNum
-    low_price:               LargeNum
-    base_volume:             LargeNum
-    quote_volume:            LargeNum
+    open_price:              Decimal
+    close_price:             Decimal
+    high_price:              Decimal
+    low_price:               Decimal
+    base_volume:             Decimal
+    quote_volume:            Decimal
 
 
+@dataclass
 class Ticker(Leaf):
     """24 hour rolling average ticker data that spawns the time interval 
     of the parent timeframe.
     """
 
-    open_price_rolling24h:   LargeNum
-    close_price_rolling24h:  LargeNum
-    high_price_rolling24h:   LargeNum
-    low_price_rolling24h:    LargeNum
-    base_volume_rolling24h:  LargeNum
-    quote_volume_rolling24h: LargeNum
+    open_price_rolling24h:   Decimal
+    close_price_rolling24h:  Decimal
+    high_price_rolling24h:   Decimal
+    low_price_rolling24h:    Decimal
+    base_volume_rolling24h:  Decimal
+    quote_volume_rolling24h: Decimal
 
 
+@dataclass
 class Trade(Leaf):
     """Single trade."""
 
     _id:      int
     time:     datetime
-    price:    LargeNum
-    quantity: LargeNum
+    price:    Decimal
+    quantity: Decimal
     is_taker: bool
 
 
+@dataclass
 class Bid(Leaf):
-    price:          LargeNum
-    quantity:       LargeNum
-    cumulative_sum: LargeNum
+    price:          Decimal
+    quantity:       Decimal
+    cumulative_sum: Decimal
 
+@dataclass
 class Ask(Leaf):
-    price:          LargeNum
-    quantity:       LargeNum
-    cumulative_sum: LargeNum
+    price:          Decimal
+    quantity:       Decimal
+    cumulative_sum: Decimal
 
+@dataclass
 class OrderBookAtOpen(Leaf):
     """The orderbook/ depthchart at open time of candle."""
 
     depth:    int
-    bids:     List[Bid] = []
-    asks:     List[Ask] = []
+    bids:     list[Bid] = []
+    asks:     list[Ask] = []
 
+@dataclass
 class OrderBookUpdate(Leaf):
     """An update of the orderbook."""
 
@@ -89,6 +93,7 @@ class OrderBookUpdate(Leaf):
     data:      Bid | Ask
 
 
+@dataclass
 class TimeFrame(Branch):
     """Timeframe that holds:
      -candle data
@@ -105,31 +110,34 @@ class TimeFrame(Branch):
 
     candle:            Optional[Candle]        = None
     ticker:            Optional[Ticker]        = None
-    trades:            Deque[Trade]            = deque()
-    orderbook_updates: Deque[OrderBookUpdate]  = deque()
+    trades:            deque[Trade]            = deque()
+    orderbook_updates: deque[OrderBookUpdate]  = deque()
 
 
+@dataclass
 class Window(Branch):
     """Window that holds all candles of a specific time interval.
     The orderbook is optional.
     """
 
     interval:                  timedelta
-    timeframes:                Deque           = deque()
+    timeframes:                deque           = deque()
     orderbook_at_first_candle: OrderBookAtOpen = OrderBookAtOpen(depth=0)
 
 
+@dataclass
 class Symbol(Branch):
     """Container that holds all windows for a specific symbol."""
 
-    name:    constr(min_length=3, max_length=8)
-    windows: Dict[str, Window]                 = {}
-    ticker:  Optional[Ticker]                  = None
+    name:                   str
+    windows:                dict[str, Window]  = {}
+    ticker:                 Optional[Ticker]   = None
 
 
+@dataclass
 class Data(Branch):
     """The root container that holds all realtime data."""
 
     options:                 Options
-    symbols:                 Dict[str, Symbol] = {}
-    all_symbols_at_exchange: Set[str]          = set()
+    symbols:                 dict[str, Symbol] = {}
+    all_symbols_at_exchange: set[str]          = set()

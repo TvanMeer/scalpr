@@ -135,7 +135,7 @@ class Symbol(Branch):
 
 
 @dataclass
-class Data(Branch):
+class DataBase(Branch):
     """The root container that holds all realtime data."""
 
     options:                 Options
